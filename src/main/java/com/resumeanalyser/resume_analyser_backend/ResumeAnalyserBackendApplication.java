@@ -2,7 +2,7 @@ package com.resumeanalyser.resume_analyser_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-//Removed async
+
 @SpringBootApplication
 public class ResumeAnalyserBackendApplication {
 	public static void main(String[] args) {

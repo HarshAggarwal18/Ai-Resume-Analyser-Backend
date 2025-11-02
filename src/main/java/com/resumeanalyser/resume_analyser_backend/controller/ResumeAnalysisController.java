@@ -32,29 +32,31 @@ public class ResumeAnalysisController {
     @PostMapping("/resume")
     public ResponseEntity<List<AnalysisResultDTO>> analyzeResume(@RequestParam("file") MultipartFile file) {
         try {
-            // Step 1 — Extract Resume
+            // 1️⃣ Extract Resume
             String text = resumeParserService.extractTextFromResume(file);
             ResumeDTO resume = new ResumeDTO("Unknown", "N/A", text);
 
-            // Step 2 — Fetch All Jobs
+            // 2️⃣ Fetch Jobs
             List<Job> jobs = jobService.getAllJobs();
 
-            // Step 3 — Convert to DTOs
-            List<JobDTO> jobDTOs = jobs.stream().map(job ->
-                    new JobDTO(
-                            job.getId(),
-                            job.getJobTitle(),
-                            job.getCompany(),
-                            job.getLocation(),
-                            job.getJobType(),
-                            job.getExperience(),
-                            job.getDescription(),
-                            job.getSkillsRequired()
-                    )
-            ).toList();
+            // 3️⃣ Prepare DTOs and Analyze
+            List<AnalysisResultDTO> results = new ArrayList<>();
+            for (Job job : jobs) {
+                JobDTO jobDTO = new JobDTO(
+                        job.getId(),
+                        job.getJobTitle(),
+                        job.getCompany(),
+                        job.getLocation(),
+                        job.getJobType(),
+                        job.getExperience(),
+                        job.getDescription(),
+                        job.getSkillsRequired()
+                );
 
-            // Step 4 — One AI call for all jobs 🚀
-            List<AnalysisResultDTO> results = aiAnalyzerService.analyzeBatch(resume, jobDTOs);
+                AIRequestDTO request = new AIRequestDTO(resume, jobDTO);
+                AnalysisResultDTO result = aiAnalyzerService.analyze(request);
+                results.add(result);
+            }
 
             return ResponseEntity.ok(results);
 
@@ -63,5 +65,4 @@ public class ResumeAnalysisController {
             return ResponseEntity.internalServerError().build();
         }
     }
-
 }

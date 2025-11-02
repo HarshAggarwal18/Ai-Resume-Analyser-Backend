@@ -19,19 +19,4 @@ public class AnalysisResultDTO {
     private String whyFit;
     private String growthAreas;
     private String summary;
-
-    // ✅ top-level overall matching percentage (convenience for frontend)
-    private double matchingPercentage;
-
-    /**
-     * Calculates and sets overall matching percentage from MatchScoreDTO
-     */
-    public void calculateMatchingPercentage() {
-        if (matchScore != null) {
-            matchScore.calculateMatchingPercentage();
-            this.matchingPercentage = matchScore.getMatchingPercentage();
-        } else {
-            this.matchingPercentage = 0.0;
-        }
-    }
 }
