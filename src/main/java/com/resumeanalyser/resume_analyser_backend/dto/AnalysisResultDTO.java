@@ -19,19 +19,4 @@ public class AnalysisResultDTO {
     private String whyFit;
     private String growthAreas;
     private String summary;
-
-    // ✅ top-level convenience field
-    private double matchingPercentage;
-
-    /**
-     * Calculates and stores top-level match percentage
-     */
-    public void calculateMatchingPercentage() {
-        if (matchScore != null) {
-            matchScore.calculateMatchingPercentage();
-            this.matchingPercentage = matchScore.getMatchingPercentage();
-        } else {
-            this.matchingPercentage = 0.0;
-        }
-    }
 }

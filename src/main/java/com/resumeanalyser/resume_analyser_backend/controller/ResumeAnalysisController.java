@@ -8,10 +8,8 @@ import com.resumeanalyser.resume_analyser_backend.service.ResumeParserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/analyze")
@@ -34,15 +32,15 @@ public class ResumeAnalysisController {
     @PostMapping("/resume")
     public ResponseEntity<List<AnalysisResultDTO>> analyzeResume(@RequestParam("file") MultipartFile file) {
         try {
-            // Step 1️⃣ — Extract Resume Text
+            // 1️⃣ Extract Resume
             String text = resumeParserService.extractTextFromResume(file);
             ResumeDTO resume = new ResumeDTO("Unknown", "N/A", text);
 
-            // Step 2️⃣ — Fetch All Jobs
+            // 2️⃣ Fetch Jobs
             List<Job> jobs = jobService.getAllJobs();
 
-            // Step 3️⃣ — Analyze Each Job (Parallel Execution)
-            List<CompletableFuture<AnalysisResultDTO>> futures = new ArrayList<>();
+            // 3️⃣ Prepare DTOs and Analyze
+            List<AnalysisResultDTO> results = new ArrayList<>();
             for (Job job : jobs) {
                 JobDTO jobDTO = new JobDTO(
                         job.getId(),
@@ -56,16 +54,9 @@ public class ResumeAnalysisController {
                 );
 
                 AIRequestDTO request = new AIRequestDTO(resume, jobDTO);
-                futures.add(aiAnalyzerService.analyze(request)); // async
+                AnalysisResultDTO result = aiAnalyzerService.analyze(request);
+                results.add(result);
             }
-
-            // Step 4️⃣ — Wait for All Tasks to Complete
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-            // Step 5️⃣ — Collect All Results
-            List<AnalysisResultDTO> results = futures.stream()
-                    .map(CompletableFuture::join)
-                    .toList();
 
             return ResponseEntity.ok(results);
 
