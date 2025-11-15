@@ -57,44 +57,63 @@ public class AIAnalyzerService {
 
     private String buildPrompt(ResumeDTO resume, JobDTO job) {
         return """
-        You are an AI resume–job matching assistant.
-        Your response **must be valid JSON only** — no explanations, no markdown, no text before or after.
-        Follow this JSON schema exactly:
+You are a precise AI Resume–Job Matching Assistant.
 
-        {
-          "title": "",
-          "company": "",
-          "location": "",
-          "employmentType": "",
-          "matchScore": {
-            "overall": 0.0,
-            "skillsMatch": 0.0,
-            "experienceMatch": 0.0,
-            "educationMatch": 0.0
-          },
-          "matchingSkills": [],
-          "missingSkills": [],
-          "whyFit": "",
-          "growthAreas": "",
-          "summary": ""
-        }
+OUTPUT RULES:
+- Return ONLY valid JSON. Start with "{" and end with "}". No markdown, comments, or extra text.
+- Use EXACTLY the fields and order shown in the schema below. Do not add or rename fields.
+- Every scalar field MUST be non-empty. If unknown, use "Unknown" (never null).
+- Arrays may be empty [] if nothing fits; otherwise include 3–12 concise items.
+- Numbers are floats in [0.0, 100.0] with at most 1 decimal (e.g., 87.5).
+- Keep each paragraph ≤ 70 words.
 
-        Now analyze the following:
+NORMALIZATION:
+- employmentType ∈ ["Full-time","Part-time","Contract","Internship","Temporary","Volunteer","Apprenticeship","Remote","Freelance","Unknown"].
+- location format: "City, Country" if possible; else "Country"; else "Remote"; else "Unknown".
+- Prefer job title/company if present; otherwise infer from resume; else "Unknown".
+- Lists must be unique and relevance-sorted.
 
-        RESUME:
-        Name: %s
-        Email: %s
-        Text: %s
+SCORING:
+- skillsMatch weight 0.50, experienceMatch weight 0.30, educationMatch weight 0.20.
+- overall = 0.5*skillsMatch + 0.3*experienceMatch + 0.2*educationMatch (round to 1 decimal).
 
-        JOB:
-        Title: %s
-        Company: %s
-        Location: %s
-        Type: %s
-        Experience: %s
-        Description: %s
-        Skills: %s
-        """.formatted(
+STRICT JSON SCHEMA (use this exact order):
+{
+  "title": "string",
+  "company": "string",
+  "location": "string",
+  "employmentType": "string",
+  "matchScore": {
+    "overall": 0.0,
+    "skillsMatch": 0.0,
+    "experienceMatch": 0.0,
+    "educationMatch": 0.0
+  },
+  "matchingSkills": ["string"],
+  "missingSkills": ["string"],
+  "whyFit": "string",
+  "growthAreas": "string",
+  "summary": "string"
+}
+
+INPUTS — analyze carefully and then output ONLY the JSON:
+
+--- RESUME ---
+Name: %s
+Email: %s
+Text:
+%s
+
+--- JOB ---
+Title: %s
+Company: %s
+Location: %s
+Type: %s
+Experience: %s
+Description:
+%s
+Required Skills: %s
+""".formatted(
                 resume.getName(),
                 resume.getEmail(),
                 resume.getText(),
@@ -107,5 +126,7 @@ public class AIAnalyzerService {
                 String.join(", ", job.getSkillsRequired())
         );
     }
+
+
 
 }
